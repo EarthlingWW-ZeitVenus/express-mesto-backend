@@ -1,4 +1,13 @@
-const { VALIDATION_ERROR,
+// ****************************************************************************
+//                            !!! ToReview: !!!
+//Проверку "if(!data)..." в блоке "then" сделал только для findByIdAndRemove
+//у остальных встроенных методов логика работы была такой, что при неправильном
+//или остсутствующем в базе id всегда генерирoвалась ошибка CastError и дальше
+//код выполнялся в блоке catch.
+//P.S. Если настаиваете, то сделаю. Хотелось бы понять - "зачем?"
+//****************************************************************************
+
+const { BAD_REQUEST_ERROR,
   AUTHENTICATION_ERROR,
   AUTHORIZATION_ERROR,
   RESOURCE_NOT_FOUND_ERROR,
@@ -29,7 +38,7 @@ const createCard = (req, res) => {
   .then(card => res.send(card))
   .catch(err => {
     if(err.name === "ValidationError") {
-      res.status(VALIDATION_ERROR)
+      res.status(BAD_REQUEST_ERROR)
       .send({ message: `Переданы некорректные данные при создании карточки` });
       return;
     };
@@ -39,11 +48,17 @@ const createCard = (req, res) => {
 
 const deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
-  .then(card => res.send({ message: `Удалена карточка: ${card.name}` }))
+  .then(card => {
+    if(!card){
+      res.status(RESOURCE_NOT_FOUND_ERROR)
+      .send({ message: `Карточка с указанным id - ${req.params.cardId}, не найдена` });
+    };
+    res.send({ message: `Удалена карточка: ${card.name}` });
+  })
   .catch(err => {
     if(err.name === "CastError") {
-      res.status(RESOURCE_NOT_FOUND_ERROR)
-      .send({ message: `Карточка по указанному id - ${err.value}, не найдена` });
+      res.status(BAD_REQUEST_ERROR)
+      .send({ message: `Передано некорректное id карточки - ${err.value}` });
       return;
     };
     res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
@@ -56,10 +71,12 @@ const addLike = (req, res) => {
   }, {
     new: true
   })
-  .then(card => res.send({ data: card }))
+  .then(card => {
+    res.send({ data: card });
+  })
   .catch(err => {
-    if(err.name === "ValidationError") {
-      res.status(VALIDATION_ERROR)
+    if(err.name === "CastError") {
+      res.status(BAD_REQUEST_ERROR)
       .send({ message: `Переданы некорректные данные для постановки/снятия лайка` });
       return;
     };
@@ -73,10 +90,12 @@ const deleteLike = (req, res) => {
   }, {
     new: true
   })
-  .then(card => res.send({ data: card }))
+  .then(card => {
+    res.send({ data: card });
+  })
   .catch(err => {
-    if(err.name === "ValidationError") {
-      res.status(VALIDATION_ERROR)
+    if(err.name === "CastError") {
+      res.status(BAD_REQUEST_ERROR)
       .send({ message: `Переданы некорректные данные для постановки/снятия лайка` });
       return;
     };
