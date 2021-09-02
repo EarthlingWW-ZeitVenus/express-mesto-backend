@@ -1,12 +1,3 @@
-// ****************************************************************************
-//                            !!! ToReview: !!!
-//Проверку "if(!data)..." в блоке "then" сделал только для findByIdAndRemove
-//у остальных встроенных методов логика работы была такой, что при неправильном
-//или остсутствующем в базе id всегда генерирoвалась ошибка CastError и дальше
-//код выполнялся в блоке catch.
-//P.S. Если настаиваете, то сделаю. Хотелось бы понять - "зачем?"
-//****************************************************************************
-
 const { BAD_REQUEST_ERROR,
   AUTHENTICATION_ERROR,
   AUTHORIZATION_ERROR,
@@ -52,6 +43,7 @@ const deleteCard = (req, res) => {
     if(!card){
       res.status(RESOURCE_NOT_FOUND_ERROR)
       .send({ message: `Карточка с указанным id - ${req.params.cardId}, не найдена` });
+      return;
     };
     res.send({ message: `Удалена карточка: ${card.name}` });
   })
@@ -72,6 +64,11 @@ const addLike = (req, res) => {
     new: true
   })
   .then(card => {
+    if(!card){
+      res.status(RESOURCE_NOT_FOUND_ERROR)
+      .send({ message: `Карточка с указанным id - ${req.params.cardId}, не найдена` });
+      return;
+    };
     res.send({ data: card });
   })
   .catch(err => {
@@ -91,6 +88,11 @@ const deleteLike = (req, res) => {
     new: true
   })
   .then(card => {
+    if(!card){
+      res.status(RESOURCE_NOT_FOUND_ERROR)
+      .send({ message: `Карточка с указанным id - ${req.params.cardId}, не найдена` });
+      return;
+    };
     res.send({ data: card });
   })
   .catch(err => {

@@ -1,12 +1,3 @@
-// ****************************************************************************
-//                            !!! ToReview: !!!
-//Проверку "if(!data)..." в блоке "then" сделал только для findByIdAndRemove
-//у остальных встроенных методов логика работы была такой, что при неправильном
-//или остсутствующем в базе id всегда генерирoвалась ошибка CastError и дальше
-//код выполнялся в блоке catch.
-//P.S. Если настаиваете, то сделаю. Хотелось бы понять - "зачем?"
-//****************************************************************************
-
 const { BAD_REQUEST_ERROR,
   AUTHENTICATION_ERROR,
   AUTHORIZATION_ERROR,
@@ -33,15 +24,17 @@ const getUsers = (req, res) => {
 const getUser = (req, res) => {
   User.findById(req.params.userId)
   .then(user => {
-    console.log("getUser runcode in block then");
+    if(!user){
+      res.status(RESOURCE_NOT_FOUND_ERROR)
+      .send({ message: `Пользователь с указанным id - ${req.params.userId}, не найден` });
+      return;
+    };
     res.send({ data: user });
   })
   .catch(err => {
-    console.log("getUser runcode in block catch");
-    console.log(`error name ${err.name}`);
     if(err.name === "CastError") {
       res.status(BAD_REQUEST_ERROR)
-      .send({ message: `Пользователь по указанному id - ${err.value}, не найден` });
+      .send({ message: `Передано некорректное id пользователя - ${err.value}` });
       return;
     };
     res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
@@ -61,22 +54,20 @@ const createUser = (req, res) => {
   });
 };
 
-const updateUser = (req, res) => {
+
+  const updateUser = (req, res) => {
   User.findByIdAndUpdate(req.user._id, req.body, {
     new: true, //для того, чтобы then получил обновленную запись
     runValidators: true, //данные валидируются перед изменением
     // upsert: true //создает новую запись в базе, если не находит среди существующих
   })
   .then(user => {
-    console.log("updateUser runcode in block then");
-    res.send({ data: user })
+    res.send({ data: user });
   })
   .catch(err => {
-    console.log("updateUser runcode in block catch");
-    console.log(`error name - ${err.name}`);
     if(err.name === "CastError") {
       res.status(BAD_REQUEST_ERROR)
-      .send({ message: `Пользователь по указанному id - ${err.value}, не найден` });
+      .send({ message: `Передано некорректное id пользователя - - ${err.value}` });
       return;
     }
     else if(err.name === "ValidationError") {
@@ -94,12 +85,12 @@ const updateAvatar = (req, res) => {
     runValidators: true,
   })
   .then(user => {
-    res.send({ data: user })
+    res.send({ data: user });
   })
   .catch(err => {
     if(err.name === "CastError") {
       res.status(BAD_REQUEST_ERROR)
-      .send({ message: `Пользователь по указанному id - ${err.value}, не найден` });
+      .send({ message: `Передано некорректное id пользователя - - ${err.value}` });
       return;
     }
     else if(err.name === "ValidationError") {
