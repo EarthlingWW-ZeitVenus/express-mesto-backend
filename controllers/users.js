@@ -15,10 +15,6 @@ const User = require('../models/users');
 const getUsers = (req, res) => {
   User.find({})
   .then(users => {
-    // if(users.length === 0) {
-      // res.status(RESOURCE_NOT_FOUND_ERROR).send({ message: "Пользователей нет" });
-      // return;
-    // };
     res.status(REQUEST_SUCCESS).send({ data: users });
   })
   .catch(err => {

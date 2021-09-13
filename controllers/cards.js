@@ -16,10 +16,6 @@ const getCards = (req, res) => {
   Card.find({})
   .populate('owner')
   .then(cards => {
-    // if(cards.length === 0) {
-      // res.status(RESOURCE_NOT_FOUND_ERROR).send({ message: "Карточек нет" });
-      // return;
-    // };
     res.status(REQUEST_SUCCESS).send({ data: cards });
   })
   .catch(err => {
