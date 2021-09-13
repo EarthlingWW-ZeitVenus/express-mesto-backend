@@ -1,9 +1,14 @@
-const { BAD_REQUEST_ERROR,
-  AUTHENTICATION_ERROR,
-  AUTHORIZATION_ERROR,
-  RESOURCE_NOT_FOUND_ERROR,
-  CONFLICTS_ERROR,
-  INTERNAL_SERVER_ERROR } = require('../utils/constants');
+const {
+  errorCodes: {
+    BAD_REQUEST_ERROR,
+    RESOURCE_NOT_FOUND_ERROR,
+    INTERNAL_SERVER_ERROR
+  },
+  successCodes: {
+    REQUEST_SUCCESS,
+    RESOURCE_CREATED_SUCCESS
+  }
+} = require('../utils/constants');
 const Card = require('../models/cards');
 
 
@@ -11,11 +16,11 @@ const getCards = (req, res) => {
   Card.find({})
   .populate('owner')
   .then(cards => {
-    if(cards.length === 0) {
-      res.status(RESOURCE_NOT_FOUND_ERROR).send({ message: "Карточек нет" });
-      return;
-    };
-    res.send({ data: cards });
+    // if(cards.length === 0) {
+      // res.status(RESOURCE_NOT_FOUND_ERROR).send({ message: "Карточек нет" });
+      // return;
+    // };
+    res.status(REQUEST_SUCCESS).send({ data: cards });
   })
   .catch(err => {
     res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
@@ -26,7 +31,7 @@ const createCard = (req, res) => {
   const { name, link } = req.body;
   const owner = req.user._id;
   Card.create({ name, link, owner })
-  .then(card => res.send(card))
+  .then(card => res.status(RESOURCE_CREATED_SUCCESS).send({ data: card }))
   .catch(err => {
     if(err.name === "ValidationError") {
       res.status(BAD_REQUEST_ERROR)
@@ -45,7 +50,7 @@ const deleteCard = (req, res) => {
       .send({ message: `Карточка с указанным id - ${req.params.cardId}, не найдена` });
       return;
     };
-    res.send({ message: `Удалена карточка: ${card.name}` });
+    res.status(REQUEST_SUCCESS).send({ message: `Удалена карточка: ${card.name}` });
   })
   .catch(err => {
     if(err.name === "CastError") {
@@ -69,7 +74,7 @@ const addLike = (req, res) => {
       .send({ message: `Карточка с указанным id - ${req.params.cardId}, не найдена` });
       return;
     };
-    res.send({ data: card });
+    res.status(REQUEST_SUCCESS).send({ data: card });
   })
   .catch(err => {
     if(err.name === "CastError") {
@@ -93,7 +98,7 @@ const deleteLike = (req, res) => {
       .send({ message: `Карточка с указанным id - ${req.params.cardId}, не найдена` });
       return;
     };
-    res.send({ data: card });
+    res.status(REQUEST_SUCCESS).send({ data: card });
   })
   .catch(err => {
     if(err.name === "CastError") {

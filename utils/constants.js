@@ -7,4 +7,12 @@ const errorCodes = {
   INTERNAL_SERVER_ERROR: 500
 }
 
-module.exports = errorCodes;
+const successCodes = {
+  REQUEST_SUCCESS: 200,
+  RESOURCE_CREATED_SUCCESS: 201
+}
+
+module.exports = {
+  errorCodes,
+  successCodes
+}

@@ -1,20 +1,25 @@
-const { BAD_REQUEST_ERROR,
-  AUTHENTICATION_ERROR,
-  AUTHORIZATION_ERROR,
-  RESOURCE_NOT_FOUND_ERROR,
-  CONFLICTS_ERROR,
-  INTERNAL_SERVER_ERROR } = require('../utils/constants');
+const {
+  errorCodes: {
+    BAD_REQUEST_ERROR,
+    RESOURCE_NOT_FOUND_ERROR,
+    INTERNAL_SERVER_ERROR
+  },
+  successCodes: {
+    REQUEST_SUCCESS,
+    RESOURCE_CREATED_SUCCESS
+  }
+} = require('../utils/constants');
 const User = require('../models/users');
 
 
 const getUsers = (req, res) => {
   User.find({})
   .then(users => {
-    if(users.length === 0) {
-      res.status(RESOURCE_NOT_FOUND_ERROR).send({ message: "Пользователей нет" });
-      return;
-    };
-    res.send({ data: users });
+    // if(users.length === 0) {
+      // res.status(RESOURCE_NOT_FOUND_ERROR).send({ message: "Пользователей нет" });
+      // return;
+    // };
+    res.status(REQUEST_SUCCESS).send({ data: users });
   })
   .catch(err => {
     res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
@@ -29,7 +34,7 @@ const getUser = (req, res) => {
       .send({ message: `Пользователь с указанным id - ${req.params.userId}, не найден` });
       return;
     };
-    res.send({ data: user });
+    res.status(REQUEST_SUCCESS).send({ data: user });
   })
   .catch(err => {
     if(err.name === "CastError") {
@@ -43,7 +48,7 @@ const getUser = (req, res) => {
 
 const createUser = (req, res) => {
   User.create(req.body)
-  .then(user => res.send({ data: user }))
+  .then(user => res.status(RESOURCE_CREATED_SUCCESS).send({ data: user }))
   .catch(err => {
     if(err.name === "ValidationError") {
       res.status(BAD_REQUEST_ERROR)
@@ -62,7 +67,7 @@ const createUser = (req, res) => {
     // upsert: true //создает новую запись в базе, если не находит среди существующих
   })
   .then(user => {
-    res.send({ data: user });
+    res.status(REQUEST_SUCCESS).send({ data: user });
   })
   .catch(err => {
     if(err.name === "CastError") {
@@ -85,7 +90,7 @@ const updateAvatar = (req, res) => {
     runValidators: true,
   })
   .then(user => {
-    res.send({ data: user });
+    res.status(REQUEST_SUCCESS).send({ data: user });
   })
   .catch(err => {
     if(err.name === "CastError") {
