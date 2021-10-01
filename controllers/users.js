@@ -2,7 +2,8 @@ const {
   errorCodes: {
     BAD_REQUEST_ERROR,
     RESOURCE_NOT_FOUND_ERROR,
-    INTERNAL_SERVER_ERROR
+    INTERNAL_SERVER_ERROR,
+    AUTHENTICATION_ERROR
   },
   successCodes: {
     REQUEST_SUCCESS,
@@ -10,6 +11,8 @@ const {
   }
 } = require('../utils/constants');
 const User = require('../models/users');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 
 const getUsers = (req, res) => {
@@ -42,8 +45,43 @@ const getUser = (req, res) => {
   });
 };
 
+const login = (req, res) => {
+  const { email, password } = req.body;
+  return User.findUserByCredentials(email, password)
+    .then(user => {
+      //Разобраться с тем, какой secret-key тут использовать
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      res.status(REQUEST_SUCCESS).send({ token });
+    })
+    .catch(err => res.status(AUTHENTICATION_ERROR).send({ message: err.message }));
+  };
+
+//   User.findOne({ email })
+//   .then(user => {
+//     if(!user) {
+//       return Promise.reject(new Error('Неправвильные почта или пароль'));
+//     };
+//     return bcrypt.compare(password, user.password);
+//   })
+//   .then(matched => {
+//     if(!matched) {
+//       return Promise.reject(new Error('Неправвильные почта или пароль'));
+//     };
+//     res.send({ message: 'Аутентификация прошла успешно' })
+//   })
+//   .catch(err => res.status(AUTHENTICATION_ERROR).send({ message: err.message }))
+// };
+
 const createUser = (req, res) => {
-  User.create(req.body)
+  bcrypt.hash(req.body.password, 10)
+  .then(hash => User.create({
+    password: hash,
+    email: req.body.email,
+    name: req.body.name,
+    about: req.body.about,
+    avatar: req.body.avatar
+    // ...req.body
+  }))
   .then(user => res.status(RESOURCE_CREATED_SUCCESS).send({ data: user }))
   .catch(err => {
     if(err.name === "ValidationError") {
