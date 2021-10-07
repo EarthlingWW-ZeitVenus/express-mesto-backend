@@ -45,32 +45,29 @@ const getUser = (req, res) => {
   });
 };
 
+const currentUser = (req, res) => {
+  User.findById(req.user._id)
+  .then(user => {
+    res.status(REQUEST_SUCCESS).send({ data: user });
+  })
+  .catch(err => {
+    res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
+  });
+};
+
 const login = (req, res) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then(user => {
-      //Разобраться с тем, какой secret-key тут использовать
       const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
-      res.status(REQUEST_SUCCESS).send({ token });
+      const { name, about, avatar, email } = user;
+      res
+      .cookie('jwt', token, { httpOnly: true, sameSite: true })
+      .status(REQUEST_SUCCESS)
+      .send({ data: { name, about, avatar, email } });
     })
     .catch(err => res.status(AUTHENTICATION_ERROR).send({ message: err.message }));
   };
-
-//   User.findOne({ email })
-//   .then(user => {
-//     if(!user) {
-//       return Promise.reject(new Error('Неправвильные почта или пароль'));
-//     };
-//     return bcrypt.compare(password, user.password);
-//   })
-//   .then(matched => {
-//     if(!matched) {
-//       return Promise.reject(new Error('Неправвильные почта или пароль'));
-//     };
-//     res.send({ message: 'Аутентификация прошла успешно' })
-//   })
-//   .catch(err => res.status(AUTHENTICATION_ERROR).send({ message: err.message }))
-// };
 
 const createUser = (req, res) => {
   bcrypt.hash(req.body.password, 10)
@@ -147,5 +144,7 @@ module.exports = {
   getUser,
   createUser,
   updateUser,
-  updateAvatar
+  updateAvatar,
+  login,
+  currentUser
 }

@@ -2,7 +2,8 @@ const {
   errorCodes: {
     BAD_REQUEST_ERROR,
     RESOURCE_NOT_FOUND_ERROR,
-    INTERNAL_SERVER_ERROR
+    INTERNAL_SERVER_ERROR,
+    AUTHORIZATION_ERROR
   },
   successCodes: {
     REQUEST_SUCCESS,
@@ -39,14 +40,23 @@ const createCard = (req, res) => {
 };
 
 const deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
+  const { cardId } = req.params;
+  Card.findById(cardId)
   .then(card => {
-    if(!card){
+    if(!card) {
       res.status(RESOURCE_NOT_FOUND_ERROR)
-      .send({ message: `Карточка с указанным id - ${req.params.cardId}, не найдена` });
+      .send({ message: `Карточка с указанным id - ${cardId}, не найдена` });
       return;
     };
-    res.status(REQUEST_SUCCESS).send({ message: `Удалена карточка: ${card.name}` });
+    if(String(card.owner._id) !== String(req.user._id)) {
+      res.status(AUTHORIZATION_ERROR)
+      .send({ message: `Вы не можете удалять чужие карточки` });
+      return;
+    };
+    Card.findByIdAndRemove(cardId)
+    .then(card => {
+      res.status(REQUEST_SUCCESS).send({ message: `Удалена карточка: ${card.name}` });
+    })
   })
   .catch(err => {
     if(err.name === "CastError") {
@@ -57,6 +67,27 @@ const deleteCard = (req, res) => {
     res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
   });
 };
+  // if(req.params.cardId !== )
+//   Card.findByIdAndRemove(req.params.cardId)
+//   .then(card => {
+//     console.log(card);
+//     console.log(card.owner);
+//     if(!card){
+//       res.status(RESOURCE_NOT_FOUND_ERROR)
+//       .send({ message: `Карточка с указанным id - ${req.params.cardId}, не найдена` });
+//       return;
+//     };
+//     res.status(REQUEST_SUCCESS).send({ message: `Удалена карточка: ${card.name}` });
+//   })
+//   .catch(err => {
+//     if(err.name === "CastError") {
+//       res.status(BAD_REQUEST_ERROR)
+//       .send({ message: `Передано некорректное id карточки - ${err.value}` });
+//       return;
+//     };
+//     res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
+//   });
+// };
 
 const addLike = (req, res) => {
   Card.findByIdAndUpdate(req.params.cardId, {
