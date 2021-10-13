@@ -1,13 +1,9 @@
 const {
-  errorCodes: {
-    RESOURCE_NOT_FOUND_ERROR,
-  }
-} = require('../utils/constants');
+  NotFoundError
+} = require('../utils/errors-classes');
 
-
-const defaultRouter = (req, res) => {
-  res.status(RESOURCE_NOT_FOUND_ERROR).send({ message: "Ресурс не найден" });
+const defaultRouter = (req, res, next) => {
+  next(new NotFoundError(`Ресурс не найден`));
 };
-
 
 module.exports = defaultRouter;

@@ -1,61 +1,54 @@
 const {
-  errorCodes: {
-    BAD_REQUEST_ERROR,
-    RESOURCE_NOT_FOUND_ERROR,
-    INTERNAL_SERVER_ERROR,
-    AUTHENTICATION_ERROR
-  },
   successCodes: {
     REQUEST_SUCCESS,
     RESOURCE_CREATED_SUCCESS
   }
 } = require('../utils/constants');
+const {
+  BadRequestError,
+  NotFoundError,
+  ConflictsError
+} = require('../utils/errors-classes');
 const User = require('../models/users');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 
-const getUsers = (req, res) => {
+const getUsers = (req, res, next) => {
   User.find({})
   .then(users => {
     res.status(REQUEST_SUCCESS).send({ data: users });
   })
-  .catch(err => {
-    res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
-  });
+  .catch(next);
 };
 
-const getUser = (req, res) => {
-  User.findById(req.params.userId)
+const getUser = (req, res, next) => {
+  const { userId } = req.params;
+  User.findById(userId)
   .then(user => {
     if(!user){
-      res.status(RESOURCE_NOT_FOUND_ERROR)
-      .send({ message: `Пользователь с указанным id - ${req.params.userId}, не найден` });
-      return;
+      throw new NotFoundError(`Пользователь с указанным id - ${userId}, не найден`);
     };
     res.status(REQUEST_SUCCESS).send({ data: user });
   })
   .catch(err => {
     if(err.name === "CastError") {
-      res.status(BAD_REQUEST_ERROR)
-      .send({ message: `Передано некорректное id пользователя - ${err.value}` });
+      next(new BadRequestError(`Передано некорректное id пользователя - ${err.value}`));
       return;
     };
-    res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
+    next(err);
   });
 };
 
-const currentUser = (req, res) => {
+const currentUser = (req, res, next) => {
   User.findById(req.user._id)
   .then(user => {
     res.status(REQUEST_SUCCESS).send({ data: user });
   })
-  .catch(err => {
-    res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
-  });
+  .catch(next);
 };
 
-const login = (req, res) => {
+const login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then(user => {
@@ -66,10 +59,10 @@ const login = (req, res) => {
       .status(REQUEST_SUCCESS)
       .send({ data: { name, about, avatar, email } });
     })
-    .catch(err => res.status(AUTHENTICATION_ERROR).send({ message: err.message }));
+    .catch(next);
   };
 
-const createUser = (req, res) => {
+const createUser = (req, res, next) => {
   bcrypt.hash(req.body.password, 10)
   .then(hash => User.create({
     password: hash,
@@ -79,19 +72,26 @@ const createUser = (req, res) => {
     avatar: req.body.avatar
     // ...req.body
   }))
-  .then(user => res.status(RESOURCE_CREATED_SUCCESS).send({ data: user }))
+  .then(user => {
+    const { name, about, avatar, email } = user;
+    res
+    .status(RESOURCE_CREATED_SUCCESS)
+    .send({ data: {name, about, avatar, email} });
+  })
   .catch(err => {
     if(err.name === "ValidationError") {
-      res.status(BAD_REQUEST_ERROR)
-      .send({ message: `Переданы некорректные данные при создании пользователя` });
+      next(new BadRequestError(`Переданы некорректные данные при создании пользователя - ${err.message}`));
       return;
     };
-    res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
+    if(err.name === "MongoError" && err.code === 11000) {
+      next(new ConflictsError(`Неправильные почта или пароль - ${err.message}`));
+      return;
+    };
+    next(err);
   });
 };
 
-
-  const updateUser = (req, res) => {
+  const updateUser = (req, res, next) => {
   User.findByIdAndUpdate(req.user._id, req.body, {
     new: true, //для того, чтобы then получил обновленную запись
     runValidators: true, //данные валидируются перед изменением
@@ -102,20 +102,18 @@ const createUser = (req, res) => {
   })
   .catch(err => {
     if(err.name === "CastError") {
-      res.status(BAD_REQUEST_ERROR)
-      .send({ message: `Передано некорректное id пользователя - - ${err.value}` });
+      next(new BadRequestError(`Передано некорректное id пользователя - - ${err.value}`));
       return;
     }
     else if(err.name === "ValidationError") {
-        res.status(BAD_REQUEST_ERROR)
-        .send({ message: `Переданы некорректные данные при обновлении данных пользователя` });
-        return;
+      next(new BadRequestError(`Переданы некорректные данные при обновлении данных пользователя`));
+      return;
     };
-    res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
+    next(err);
   });
 };
 
-const updateAvatar = (req, res) => {
+const updateAvatar = (req, res, next) => {
   User.findByIdAndUpdate(req.user._id, req.body, {
     new: true,
     runValidators: true,
@@ -125,16 +123,14 @@ const updateAvatar = (req, res) => {
   })
   .catch(err => {
     if(err.name === "CastError") {
-      res.status(BAD_REQUEST_ERROR)
-      .send({ message: `Передано некорректное id пользователя - - ${err.value}` });
+      next(new BadRequestError(`Передано некорректное id пользователя - - ${err.value}`));
       return;
     }
     else if(err.name === "ValidationError") {
-        res.status(BAD_REQUEST_ERROR)
-        .send({ message: `Переданы некорректные данные при обновлении данных пользователя` });
-        return;
+      next(new BadRequestError(`Переданы некорректные данные при обновлении данных пользователя`));
+      return;
     };
-    res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
+    next(err);
   });
 };
 

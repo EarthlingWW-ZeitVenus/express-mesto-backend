@@ -7,6 +7,7 @@ const {
   deleteLike
 } = require('../controllers/cards');
 const auth = require('../middlewares/auth');
+const { celebrate, Joi } = require('celebrate');
 
 router.use(auth);
 router.get('/', getCards);
