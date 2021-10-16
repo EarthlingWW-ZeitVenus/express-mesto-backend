@@ -12,7 +12,10 @@ const successCodes = {
   RESOURCE_CREATED_SUCCESS: 201
 }
 
+const regExpUrl = /ht{2}ps?:\/\/(w{3}\.)?[\w\-]+\.[a-z]{1,3}([\.\/][^\.\/][\w\-\.~:\/\?#\[\]@!\$\&\'\(\)\*\+\,\;\=]*)?#?$/;
+
 module.exports = {
   errorCodes,
-  successCodes
+  successCodes,
+  regExpUrl
 }

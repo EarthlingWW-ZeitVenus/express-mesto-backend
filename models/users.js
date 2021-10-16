@@ -1,9 +1,8 @@
 const mongoose = require('mongoose');
 const externalValidator = require('validator');
 const bcrypt = require('bcryptjs');
-const {
-  AuthenticationError
- } = require('../utils/errors-classes');
+const { AuthenticationError } = require('../utils/errors-classes');
+const { regExpUrl } = require('../utils/constants');
 
 
 const userSchema = new mongoose.Schema({
@@ -37,8 +36,15 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    default: "https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png"
-  },
+    default: "https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png",
+    validate: {
+      validator: function (value) {
+        // console.log(regExpUrl.test(value));
+        return regExpUrl.test(value);
+      },
+      message: props => `${props.value} - ссылка задана неверно`
+    }
+  }
 });
 
 
