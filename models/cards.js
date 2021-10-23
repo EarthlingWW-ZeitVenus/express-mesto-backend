@@ -6,32 +6,31 @@ const cardSchema = new mongoose.Schema({
     type: String,
     required: true,
     minlength: 2,
-    maxlength: 30
+    maxlength: 30,
   },
   link: {
     type: String,
     required: true,
     validate: {
-      validator: function (value) {
-        // console.log(regExpUrl.test(value));
+      validator(value) {
         return regExpUrl.test(value);
       },
-      message: props => `${props.value} - ссылка задана неверно`
-    }
+      message: (props) => `${props.value} - ссылка задана неверно`,
+    },
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',
-    required: true
+    required: true,
   },
   likes: [{
     type: mongoose.Schema.Types.ObjectId,
-    default: []
+    default: [],
   }],
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 module.exports = mongoose.model('card', cardSchema);
