@@ -25,7 +25,7 @@ const createCard = (req, res, next) => {
     .then((card) => res.status(RESOURCE_CREATED_SUCCESS).send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new BadRequestError(`Переданы некорректные данные при создании карточки - ${err.message}`));
+        next(new BadRequestError('Переданы некорректные данные при создании карточки'));
         return;
       }
       next(err);
@@ -37,19 +37,19 @@ const deleteCard = (req, res, next) => {
   Card.findById(cardId)
     .then((card) => {
       if (!card) {
-        throw new NotFoundError(`Карточка с указанным id (${cardId}), не найдена`);
+        throw new NotFoundError('Карточка с указанным id, не найдена');
       }
       if (String(card.owner._id) !== String(req.user._id)) {
         throw new AuthorizationError('Вы не можете удалять чужие карточки');
       }
       Card.findByIdAndRemove(cardId)
         .then(() => {
-          res.status(REQUEST_SUCCESS).send({ message: `Удалена карточка: ${card.name}` });
+          res.status(REQUEST_SUCCESS).send({ message: 'Карточка удалена' });
         });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        next(new BadRequestError(`Передано некорректное id карточки - ${err.value}`));
+        next(new BadRequestError('Передано некорректное id карточки'));
         return;
       }
       next(err);
@@ -65,7 +65,7 @@ const addLike = (req, res, next) => {
   })
     .then((card) => {
       if (!card) {
-        throw new NotFoundError(`Карточка с указанным id (${cardId}), не найдена`);
+        throw new NotFoundError('Карточка с указанным id не найдена');
       }
       res.status(REQUEST_SUCCESS).send({ data: card });
     })
@@ -87,7 +87,7 @@ const deleteLike = (req, res, next) => {
   })
     .then((card) => {
       if (!card) {
-        throw new NotFoundError(`Карточка с указанным id (${cardId}), не найдена`);
+        throw new NotFoundError('Карточка с указанным id не найдена');
       }
       res.status(REQUEST_SUCCESS).send({ data: card });
     })
